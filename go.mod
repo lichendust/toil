@@ -1,4 +1,4 @@
-module toil
+module github.com/qxoko/toil
 
 go 1.20
 
