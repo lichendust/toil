@@ -46,6 +46,7 @@ func main() {
 		case "help", "usage":
 			println(TOIL)
 			println("toil [optional-path]")
+			return
 		default:
 			os.Chdir(args[0])
 		}
