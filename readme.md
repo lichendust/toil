@@ -18,6 +18,12 @@ If those files change on disk, it will hot-reload them. It polls once every seco
 
 With appropriate firewall permissions, it can serve as many clients as you like (within reason).
 
+## Installation
+
+With the Go compiler —
+
+	go install github.com/qxoko/toil@latest
+
 ## Usage
 
 	toil
