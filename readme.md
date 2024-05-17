@@ -22,7 +22,7 @@ With appropriate firewall permissions, it can serve as many clients as you like 
 
 With the Go compiler —
 
-	go install github.com/qxoko/toil@latest
+	go install github.com/lichendust/toil@latest
 
 ## Usage
 
