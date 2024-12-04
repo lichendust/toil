@@ -20,7 +20,7 @@ import "github.com/gorilla/websocket"
 	An optional argument to pass a root domain and find/replace
 	it inside the html file content, so you can develop with
 	absolute paths. Not a high priority, because my static site
-	builder (qxoko/spindle) solves this problem for me.
+	builder (lichendust/spindle) solves this problem for me.
 
 	# Get rid of gorilla/websocket
 
@@ -28,7 +28,7 @@ import "github.com/gorilla/websocket"
 	library, just with net/http.  I haven't tried it.  I might do.
 */
 
-const TOIL = "Toil v0.1.1"
+const TOIL = "Toil v0.1.3"
 
 const SERVE_PORT     = ":3456"
 const RELOAD_PREFIX  = "/_toil/"
@@ -80,17 +80,19 @@ func main() {
 			does_exist, is_dir := exists(incoming_path)
 
 			if does_exist && is_dir {
-				incoming_path = filepath.ToSlash(filepath.Join(incoming_path, "index.html"))
-				does_exist, _ = exists(incoming_path)
-			} else {
-				incoming_path += ".html"
-				does_exist, _ = exists(incoming_path)
+				index_path := filepath.ToSlash(filepath.Join(incoming_path, "index.html"))
+				index_exists, _ := exists(index_path)
+
+				if index_exists {
+					serve_file(w, index_path)
+					return
+				}
 			}
 
+			incoming_path += ".html"
+			does_exist, _ = exists(incoming_path)
 			if does_exist {
-				// is this a good way to do it? who knows
-				file_bytes := bytes.Replace(load_file(incoming_path), []byte("</head>"), []byte(RELOAD_SCRIPT), 1)
-				w.Write([]byte(file_bytes))
+				serve_file(w, incoming_path)
 				return
 			}
 
@@ -158,6 +160,11 @@ func open_browser(port string) {
 
 	println(TOIL)
 	println(url)
+}
+
+func serve_file(w http.ResponseWriter, file_name string) {
+	file_bytes := bytes.Replace(load_file(file_name), []byte("</head>"), []byte(RELOAD_SCRIPT), 1)
+	w.Write([]byte(file_bytes))
 }
 
 func exists(file string) (bool, bool) {
