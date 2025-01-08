@@ -28,7 +28,7 @@ import "github.com/gorilla/websocket"
 	library, just with net/http.  I haven't tried it.  I might do.
 */
 
-const TOIL = "Toil v0.1.3"
+const TOIL = "Toil v0.1.4"
 
 const SERVE_PORT     = ":3456"
 const RELOAD_PREFIX  = "/_toil/"
