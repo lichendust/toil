@@ -36,6 +36,12 @@ You can optionally pass a path, to serve a specific folder.  Toil just changes d
 
 Use Ctrl+C to close it.
 
+Use the `-r` flag to specific a domain to replace with local paths.
+
+	toil -r https://lichendust.com path/to/files
+
+This will strip out the exact string from any pages Toil serves, a simple way to make links relative in locally served pages that otherwise contain fully qualified URLs.  Useful for SSGs that don't have their own servers.
+
 ## Important Info
 
 Toil expects properly formatted HTML files with at least a `<head>` and `<body>`.  It will insert its client-side hot-reload listener into the `<head>`.  There must *be a head already for this to work*.  Toil is not a smart server and will not solve any incompletely-formatted HTML documents for you.
