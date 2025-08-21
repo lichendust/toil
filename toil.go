@@ -15,20 +15,14 @@ import "github.com/gorilla/websocket"
 /*
 	@todo
 
-	# Root domain replacement
-
-	An optional argument to pass a root domain and find/replace
-	it inside the html file content, so you can develop with
-	absolute paths. Not a high priority, because my static site
-	builder (lichendust/spindle) solves this problem for me.
-
 	# Get rid of gorilla/websocket
 
 	It's supposedly possible to do this without using a middleware
 	library, just with net/http.  I haven't tried it.  I might do.
 */
 
-const TOIL = "Toil v0.1.4"
+const VERSION = "v0.1.5"
+const TOIL    = "Toil " + VERSION
 
 const SERVE_PORT     = ":3456"
 const RELOAD_PREFIX  = "/_toil/"
@@ -41,14 +35,35 @@ const TIME_PING_PERIOD = (TIME_PONG_WAIT * 9) / 10
 func main() {
 	args := os.Args[1:]
 
-	if len(args) > 0 {
-		switch args[0] {
-		case "help", "usage":
+	max   := len(args) - 1
+	index := 0
+
+	root_domain := ""
+
+	for {
+		if index > max {
+			break
+		}
+
+		arg := args[index]
+		index += 1
+
+		switch arg {
+		case "help", "usage", "-h", "--help":
 			println(TOIL)
-			println("toil [optional-path]")
+			println("usage\n\n    toil [optional-path]")
+			println("\nflags\n\n    -r <domain name (including scheme) to ignore>\n")
 			return
+
+		case "-r":
+			if index > max {
+				eprintln("error: the -r flag requires a value")
+				return
+			}
+			root_domain = args[index]
+
 		default:
-			os.Chdir(args[0])
+			os.Chdir(arg)
 		}
 	}
 
@@ -76,31 +91,28 @@ func main() {
 			incoming_path = incoming_path[1:]
 		}
 
-		if filepath.Ext(incoming_path) == "" {
-			does_exist, is_dir := exists(incoming_path)
-
-			if does_exist && is_dir {
-				index_path := filepath.ToSlash(filepath.Join(incoming_path, "index.html"))
-				index_exists, _ := exists(index_path)
-
-				if index_exists {
-					serve_file(w, index_path)
-					return
-				}
-			}
-
-			incoming_path += ".html"
-			does_exist, _ = exists(incoming_path)
-			if does_exist {
-				serve_file(w, incoming_path)
-				return
-			}
-
-			w.WriteHeader(http.StatusNotFound)
+		does_exist, is_dir := exists(incoming_path)
+		if does_exist && !is_dir {
+			http.ServeFile(w, r, incoming_path)
 			return
 		}
 
-		http.ServeFile(w, r, incoming_path)
+		if does_exist && is_dir {
+			index_path := filepath.ToSlash(filepath.Join(incoming_path, "index.html"))
+			if index_exists, _ := exists(index_path); index_exists {
+				serve_file(w, index_path, root_domain)
+				return
+			}
+		}
+
+		incoming_path += ".html"
+		does_exist, _ = exists(incoming_path)
+		if does_exist {
+			serve_file(w, incoming_path, root_domain)
+			return
+		}
+
+		w.WriteHeader(http.StatusNotFound)
 	})
 
 	// socket reloader
@@ -162,8 +174,13 @@ func open_browser(port string) {
 	println(url)
 }
 
-func serve_file(w http.ResponseWriter, file_name string) {
+func serve_file(w http.ResponseWriter, file_name, root_domain string) {
 	file_bytes := bytes.Replace(load_file(file_name), []byte("</head>"), []byte(RELOAD_SCRIPT), 1)
+
+	if root_domain != "" {
+		file_bytes = bytes.ReplaceAll(file_bytes, []byte(root_domain), []byte{})
+	}
+
 	w.Write([]byte(file_bytes))
 }
 
